@@ -6,12 +6,14 @@ export class Migration1715854795070 implements MigrationInterface {
     CREATE TABLE IF NOT EXISTS "user"(
         id SERIAL PRIMARY KEY,
         created_by_company_has_user_id INTEGER,
-        username VARCHAR(64) UNIQUE,
         first_name VARCHAR(64),
         last_name VARCHAR(64),
-        password TEXT,
+        mpin TEXT,
         created BIGINT,
-        active BOOLEAN
+        active BOOLEAN,
+        file_id INTEGER,
+        email VARCHAR(64),
+        mobile VARCHAR(64)
     );
 
     CREATE TABLE IF NOT EXISTS "company_type"(
@@ -25,11 +27,9 @@ export class Migration1715854795070 implements MigrationInterface {
     CREATE TABLE IF NOT EXISTS "company"(
         id SERIAL PRIMARY KEY,
         name VARCHAR(64),
-        organization_number VARCHAR(64),
         reference VARCHAR(64),
         active BOOLEAN,
         created_by_company_has_user_id INTEGER,
-        our_reference_company_has_user_id INTEGER,
         company_type_id INTEGER REFERENCES "company_type" NOT NULL,
         logo_file_id integer,
         created BIGINT
@@ -40,11 +40,23 @@ export class Migration1715854795070 implements MigrationInterface {
         created_by_company_has_user_id INTEGER REFERENCES "company_has_user",
         company_id INTEGER REFERENCES "company" NOT NULL,
         user_id INTEGER REFERENCES "user" NOT NULL,
-        email VARCHAR(64),
-        phone VARCHAR(64),
-        mobilephone VARCHAR(64),
         active BOOLEAN,
         created BIGINT
+    );
+
+    CREATE TABLE IF NOT EXISTS "file"(
+        id SERIAL PRIMARY KEY,
+        path text,
+        created BIGINT,
+        original_name VARCHAR(256)
+    );
+
+    CREATE TABLE IF NOT EXISTS "otp_requests "(
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES "user" NOT NULL,
+        otp_code VARCHAR(6),
+        created BIGINT,
+        is_used BOOLEAN DEFAULT false
     );
 
     ALTER TABLE "user"
@@ -54,82 +66,45 @@ export class Migration1715854795070 implements MigrationInterface {
     ALTER TABLE "company"
     ADD CONSTRAINT created_by_company_has_user_id_fkey
     FOREIGN KEY (created_by_company_has_user_id) REFERENCES company_has_user(id);
-   
+
+
+    ALTER TABLE "user"
+    ADD CONSTRAINT user_file_id_fkey FOREIGN KEY (file_id) REFERENCES file(id);
+
     ALTER TABLE "company"
-    ADD CONSTRAINT our_reference_company_has_user_id_fkey
-    FOREIGN KEY (our_reference_company_has_user_id) REFERENCES company_has_user(id);
+        ADD CONSTRAINT fk_logo_file_id
+        FOREIGN KEY (logo_file_id) REFERENCES file(id);
+
 
     INSERT INTO "company_type"
         ( name, type, active)
         VALUES('Super Admin', 1, true),
         ('Admin', 2, true);
 
-        
         INSERT INTO "user"
-        (created_by_company_has_user_id, username, first_name, last_name, password, active)
-        VALUES (null,'admin','Admin','dogpark','$2b$10$9llBFhBBo3LhpVkqPtQ39.tbAQZirsuWvB3HfqbXaVzsB5dQchFTu',true);
+        (created_by_company_has_user_id, first_name, last_name, mpin, active,mobile,email)
+        VALUES (null,'Admin','BoilerPlate','$2b$10$9llBFhBBo3LhpVkqPtQ39.tbAQZirsuWvB3HfqbXaVzsB5dQchFTu',true,8577777777,'admin@gmail.com');
           
 
         INSERT INTO "company"(
-         name, organization_number, reference, active, created_by_company_has_user_id,
-         our_reference_company_has_user_id, company_type_id)
-        VALUES ('Saas-Innova', '559023-6989', 'Karin', true, null, null, 1);
+         name, reference, active, created_by_company_has_user_id,company_type_id)
+        VALUES ('Saas-Innova','Karin', true, null, 1);
 
         
          INSERT INTO "company_has_user"(
-         created_by_company_has_user_id, company_id, user_id, email, phone, mobilephone, active)
-        VALUES (null, 1, 1, 'admin@gmail.com', null,null,true);
+         created_by_company_has_user_id, company_id, user_id,active)
+        VALUES (null, 1, 1,true);
     
 
         UPDATE "user"
         SET created_by_company_has_user_id=1
         WHERE id = 1;
 
-        UPDATE company
-        SET created_by_company_has_user_id=1, our_reference_company_has_user_id=1
-        WHERE id=1;
-
         UPDATE company_has_user
         SET created_by_company_has_user_id=1
         WHERE id=1;
 
-        DO $$
-        BEGIN
-
-        IF EXISTS(SELECT *
-            FROM information_schema.columns
-                WHERE table_name='user' and column_name='created_by_company_has_user_id')
-        THEN
-            ALTER TABLE "user"
-                ALTER COLUMN created_by_company_has_user_id SET NOT NULL;
-        END IF;
-
-        IF EXISTS(SELECT *
-            FROM information_schema.columns
-                WHERE table_name='company' and column_name='created_by_company_has_user_id')
-        THEN
-            ALTER TABLE "company"
-                ALTER COLUMN created_by_company_has_user_id SET NOT NULL;
-        END IF;
-
-        IF EXISTS(SELECT *
-            FROM information_schema.columns
-                WHERE table_name='company' and column_name='our_reference_company_has_user_id')
-        THEN
-            ALTER TABLE "company"
-                ALTER COLUMN our_reference_company_has_user_id SET NOT NULL;
-        END IF;
-
-
-        IF EXISTS(SELECT *
-            FROM information_schema.columns
-                WHERE table_name='company_has_user' and column_name='created_by_company_has_user_id')
-        THEN
-            ALTER TABLE "company_has_user"
-                ALTER COLUMN created_by_company_has_user_id SET NOT NULL;
-        END IF;
-
-        END $$;
+       
 
     CREATE OR REPLACE FUNCTION set_created() RETURNS trigger AS $$
     /* ------------------------------------------------------------------------------------
@@ -167,7 +142,7 @@ export class Migration1715854795070 implements MigrationInterface {
                                   FOR EACH ROW EXECUTE PROCEDURE set_created()',
                                   ct);
           END LOOP;    
-      END $$ LANGUAGE plpgsql 
+      END $$ LANGUAGE plpgsql;
     `);
   }
 
@@ -176,5 +151,7 @@ export class Migration1715854795070 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE IF EXISTS "company_type";`);
     await queryRunner.query(`DROP TABLE IF EXISTS "company";`);
     await queryRunner.query(`DROP TABLE IF EXISTS "company_has_user";`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "file";`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "otp_requests";`);
   }
 }

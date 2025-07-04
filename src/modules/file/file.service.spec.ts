@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserService } from './user.service';
+import { FileService } from './file.service';
 
 jest.mock('../../core/data-source', () => {
   return {
@@ -7,16 +7,16 @@ jest.mock('../../core/data-source', () => {
   };
 });
 
-describe('UserService', () => {
-  let service: UserService;
+describe('FileService', () => {
+  let service: FileService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [],
-      providers: [UserService],
+      providers: [FileService],
     }).compile();
 
-    service = module.get<UserService>(UserService);
+    service = module.get<FileService>(FileService);
   });
 
   it('should be defined', () => {

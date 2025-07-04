@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
-import { HttpModule } from '@nestjs/axios';
 import { DataSource } from 'typeorm';
 import { dataSource } from './core/data-source';
 import { ApplicationModules } from './modules/application.module';
@@ -12,7 +11,6 @@ import { CoreModule } from './core/core.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     CoreModule,
-    HttpModule,
     ...ApplicationModules,
   ],
   controllers: [AppController],
