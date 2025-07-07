@@ -1,13 +1,24 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { ValidationError } from 'class-validator';
+import { validationErrorsCheck } from './commons/helper';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const port = process.env.PORT || 7002;
-  app.useGlobalPipes(new ValidationPipe({ transform: true }));
+
   app.enableCors();
+  app.useGlobalPipes(
+    new ValidationPipe({
+      disableErrorMessages: true,
+      exceptionFactory: (validationErrors: ValidationError[] = []) => {
+        const errors = validationErrorsCheck(validationErrors);
+        return new BadRequestException(errors);
+      },
+    }),
+  );
   if (process.env.MODE === 'DEV') {
     // Swagger
     const config = new DocumentBuilder()

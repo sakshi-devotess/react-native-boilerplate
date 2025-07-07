@@ -4,16 +4,19 @@ import { OtpRequests } from './entities/otp-requests.entity';
 import { RemoveDto } from '../../commons/dto/remove.dto';
 import { CreateOtpRequestsInput } from './dto/create-otp-requests.input';
 import { UpdateOtpRequestsInput } from './dto/update-otp-requests.input';
+import { AbstractService } from 'src/commons/abstract.service';
 
 @Injectable()
-export class OtpRequestsService {
+export class OtpRequestsService extends AbstractService {
   /**
    * Constructor for OtpRequestsService.
    * Injects dependencies and initializes the abstract service with the otpRequests repository.
    *
    * @param {ResponseMsgService} responseMsgService - Service to handle response messages.
    */
-  constructor() {}
+  constructor() {
+    super(otpRequestsRepository);
+  }
 
   /**
    * Creates a new OtpRequests entry in the database.
@@ -28,5 +31,13 @@ export class OtpRequestsService {
   async create(data: CreateOtpRequestsInput): Promise<OtpRequests | boolean> {
     const create = otpRequestsRepository.create(data);
     return await otpRequestsRepository.save(create);
+  }
+
+  async update(
+    id: number,
+    data: UpdateOtpRequestsInput,
+  ): Promise<OtpRequests | boolean> {
+    const update = this.abstractUpdate(id, data);
+    return update;
   }
 }

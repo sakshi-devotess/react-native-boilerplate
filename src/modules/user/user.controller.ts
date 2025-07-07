@@ -34,4 +34,10 @@ export class UserController {
   create(@Body() createUserInput: CreateUserInput) {
     return this.userService.create(createUserInput);
   }
+
+  @ApiBody({ type: UpdateUserInput })
+  @Patch(':id')
+  update(@Param('id') id: number, @Body() updateUserInput: UpdateUserInput) {
+    return this.userService.update(id, updateUserInput);
+  }
 }
