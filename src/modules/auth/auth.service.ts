@@ -1,14 +1,24 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { RequestOtpInput } from './dto/request-otp.input';
 import { UserService } from '../user/user.service';
 import { OtpRequestsService } from '../otp-requests/otp-requests.service';
 import { VerifyOtpInput } from './dto/verify-otp.input';
+import { VerifyOrSetMpinInput } from './dto/set-mpin.input';
+import * as bcrypt from 'bcrypt';
+import { TOKEN_TIME } from 'src/commons/constant';
+import { config } from 'src/commons/config';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
     private otpRequestsService: OtpRequestsService,
+    private jwtService: JwtService,
   ) {}
 
   async requestOtp(data: RequestOtpInput): Promise<any> {
@@ -27,13 +37,7 @@ export class AuthService {
 
   async verifyOtp(data: VerifyOtpInput): Promise<any> {
     const { mobile, otp } = data;
-    const userData = await this.userService.findOne({
-      where: { mobile },
-    });
-
-    if (!userData) {
-      throw new BadRequestException('User not found');
-    }
+    const userData = await this.getUserByMobile(mobile);
 
     const otpRequests = await this.otpRequestsService.find({
       where: { user_id: userData.id },
@@ -46,7 +50,6 @@ export class AuthService {
     }
 
     const otpRequestData = otpRequests[0];
-    console.log('otpRequestData :>> ', otpRequestData);
     if (otpRequestData.otp_code !== otp || otpRequestData.is_used) {
       throw new BadRequestException('Invalid OTP');
     }
@@ -57,5 +60,79 @@ export class AuthService {
     });
 
     return { message: 'OTP verified successfully', user: userData };
+  }
+
+  async setMpin(data: VerifyOrSetMpinInput) {
+    const { mobile, mpin } = data;
+    const userData = await this.getUserByMobile(mobile);
+
+    if (userData.mpin !== null) {
+      const isMatch = await bcrypt.compare(mpin, userData.mpin);
+
+      if (isMatch) {
+        throw new NotFoundException(
+          'Your mpin is the same as your previous mpin. Please enter a different mpin!',
+        );
+      }
+    }
+
+    const hashedMpin = await bcrypt.hash(mpin, 6);
+    userData.mpin = hashedMpin;
+    await this.userService.update(userData.id, userData);
+
+    return { message: 'Mpin set successfully', user: userData };
+  }
+
+  async verifyMpin(data: VerifyOrSetMpinInput) {
+    const { mobile, mpin } = data;
+    const userData = await this.getUserByMobile(mobile);
+
+    const isMatch = await bcrypt.compare(mpin, userData.mpin);
+    if (!isMatch) {
+      throw new BadRequestException('Invalid Mpin');
+    }
+
+    const tokens = await this.createTokens(userData.id, null);
+
+    return { message: 'Mpin verified successfully', user: userData, tokens };
+  }
+
+  private async getUserByMobile(mobile: string) {
+    const userData = await this.userService.findOne({ where: { mobile } });
+    if (!userData) {
+      throw new BadRequestException('User not found');
+    }
+    return userData;
+  }
+
+  private async createTokens(user_id: number, secret: string | null = null) {
+    const [at, rt] = await Promise.all([
+      this.jwtService.signAsync(
+        {
+          id: user_id,
+        },
+        secret
+          ? {
+              secret: secret,
+              expiresIn: TOKEN_TIME.ACCESS_TOKEN_TIME,
+            }
+          : {
+              expiresIn: TOKEN_TIME.ACCESS_TOKEN_TIME,
+            },
+      ),
+      this.jwtService.signAsync(
+        {
+          id: user_id,
+        },
+        {
+          secret: config.REFRESH_KEY,
+          expiresIn: TOKEN_TIME.REFRESH_TOKEN_TIME,
+        },
+      ),
+    ]);
+    return {
+      access_token: at,
+      refresh_token: rt,
+    };
   }
 }

@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { userRepository } from './repository/user.repository';
 import { User } from './entities/user.entity';
-import { RemoveDto } from '../../commons/dto/remove.dto';
 import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
 import { AbstractService } from 'src/commons/abstract.service';
@@ -40,7 +39,6 @@ export class UserService extends AbstractService {
   }
 
   async update(id: number, data: UpdateUserInput): Promise<User | boolean> {
-    console.log('data :>> ', data);
     const userData = await userRepository.findOne({ where: { id } });
     if (!userData) {
       throw new NotFoundException('User with this ID does not exist.');

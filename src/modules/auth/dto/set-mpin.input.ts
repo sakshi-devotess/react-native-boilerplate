@@ -1,0 +1,15 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, Length, Matches } from 'class-validator';
+
+export class VerifyOrSetMpinInput {
+  @ApiProperty()
+  @IsNotEmpty()
+  @Length(10, 10, { message: 'Mobile number must be exactly 10 digits' })
+  mobile: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @Length(6, 6, { message: 'Mpin must be 6 digit' })
+  @Matches(/^\d{6}$/, { message: 'Mpin must be a 6-digit number' })
+  mpin: string;
+}
