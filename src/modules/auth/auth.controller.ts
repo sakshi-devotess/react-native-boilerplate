@@ -24,7 +24,7 @@ export class AuthController {
     return baseController.getResult(res, 200, result, 'OTP Send Successfully.');
   }
 
-  // @SkipAuth()
+  @SkipAuth()
   @Post('/verify-otp')
   async verifyOtp(
     @Body() data: VerifyOtpInput,

@@ -66,6 +66,19 @@ export class AuthService {
     const { mobile, mpin } = data;
     const userData = await this.getUserByMobile(mobile);
 
+    const isOtpVerified = await this.userService.find({
+      where: {
+        mobile: mobile,
+        otp_requests_s: {
+          is_used: true,
+        },
+      },
+      relations: ['otp_requests_s'],
+    });
+    if (!isOtpVerified.length) {
+      throw new BadRequestException('Your Mobile number is not verified!');
+    }
+
     if (userData.mpin !== null) {
       const isMatch = await bcrypt.compare(mpin, userData.mpin);
 

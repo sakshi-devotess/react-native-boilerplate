@@ -1,19 +1,12 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
-import { ApiBasicAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiBasicAuth, ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('user')
 @ApiBasicAuth()
+@ApiBearerAuth()
 @Controller('user')
 export class UserController {
   /**
@@ -22,7 +15,16 @@ export class UserController {
    * @param UserService - Service to handle the business logic.
    */
   constructor(private readonly userService: UserService) {}
-
+  /**
+   * Retrieves a specific User entry by ID.
+   *
+   * @param {string} id - The ID of the User to retrieve.
+   * @returns {Promise<any>} - The entity with the specified ID.
+   */
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.userService.findOne({ where: { id } });
+  }
   /**
    * Creates a new User entry.
    *

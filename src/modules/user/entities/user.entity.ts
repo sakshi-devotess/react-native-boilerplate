@@ -18,27 +18,30 @@ export class User {
   @PrimaryGeneratedColumn({ type: 'integer', name: 'id' })
   id: number;
 
-  @IsInt()
   @Column('integer', {
     name: 'created_by_company_has_user_id',
     nullable: true,
   })
+  @ValidateIf((o) => o.created_by_company_has_user_id != null)
+  @IsInt()
   created_by_company_has_user_id: number | null;
 
-  @MaxLength(64)
   @Column('character varying', {
     name: 'first_name',
     nullable: true,
     length: 64,
   })
+  @ValidateIf((o) => o.first_name != null)
+  @MaxLength(64)
   first_name: string | null;
 
-  @MaxLength(64)
   @Column('character varying', {
     name: 'last_name',
     nullable: true,
     length: 64,
   })
+  @ValidateIf((o) => o.last_name != null)
+  @MaxLength(64)
   last_name: string | null;
 
   @Column('text', { name: 'mpin', nullable: true })
@@ -50,16 +53,19 @@ export class User {
   @Column('boolean', { name: 'active', nullable: true })
   active: boolean | null;
 
-  @IsInt()
   @Column('integer', { name: 'file_id', nullable: true })
+  @ValidateIf((o) => o.file_id != null)
+  @IsInt()
   file_id: number | null;
 
-  @MaxLength(64)
   @Column('character varying', { name: 'email', nullable: true, length: 64 })
+  @ValidateIf((o) => o.email != null)
+  @MaxLength(64)
   email: string | null;
 
-  @MaxLength(64)
   @Column('character varying', { name: 'mobile', nullable: true, length: 64 })
+  @ValidateIf((o) => o.mobile !== null)
+  @MaxLength(64)
   mobile: string | null;
 
   @OneToMany(

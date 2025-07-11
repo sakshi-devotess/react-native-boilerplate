@@ -29,8 +29,8 @@ export class OtpRequestsService extends AbstractService {
    * @returns {Promise<OtpRequests | boolean>} - The created entity or false if the operation fails.
    */
   async create(data: CreateOtpRequestsInput): Promise<OtpRequests | boolean> {
-    const create = otpRequestsRepository.create(data);
-    return await otpRequestsRepository.save(create);
+    const create = await this.abstractCreate(data);
+    return create;
   }
 
   async update(

@@ -34,8 +34,8 @@ export class UserService extends AbstractService {
     if (userData.length > 0) {
       return userData[0];
     }
-    const create = userRepository.create(data);
-    return await userRepository.save(create);
+    const create = this.abstractCreate(data);
+    return create;
   }
 
   async update(id: number, data: UpdateUserInput): Promise<User | boolean> {
@@ -43,10 +43,7 @@ export class UserService extends AbstractService {
     if (!userData) {
       throw new NotFoundException('User with this ID does not exist.');
     }
-    const updateResult = await userRepository.update(id, data);
-    if (updateResult.affected && updateResult.affected > 0) {
-      return true;
-    }
-    return false;
+    const updateResult = await this.abstractUpdate(id, data);
+    return updateResult;
   }
 }

@@ -38,7 +38,33 @@ export abstract class AbstractService {
     const data = await this.repository.findOne(options);
     return data;
   }
+  async abstractCreate(data: any): Promise<any> {
+    const entity = this.repository.create(data);
+    const errors = await validate(entity);
+    if (errors.length > 0) {
+      const error = errors.map((e) => {
+        return {
+          target: e.target.constructor.name,
+          error: {
+            [e.property]: Object.values(e.constraints).join(' '),
+          },
+        };
+      });
 
+      throw new BadRequestException(error);
+    }
+
+    const res = await this.repository.save(entity);
+    if (res && res.id) {
+      
+      return await this.findOne({
+        where: { id: res.id },
+      });
+    } else {
+      
+      return false;
+    }
+  }
   async abstractUpdate(id: number, data: any): Promise<any> {
     const entity = await this.repository.preload(data);
     if (!entity) return false;

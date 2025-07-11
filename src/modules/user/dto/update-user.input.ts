@@ -1,7 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { CreateUserInput } from './create-user.input';
 
-export class UpdateUserInput extends CreateUserInput {
+export class UpdateUserInput extends PartialType(CreateUserInput) {
   @ApiProperty()
   id: number;
 }
