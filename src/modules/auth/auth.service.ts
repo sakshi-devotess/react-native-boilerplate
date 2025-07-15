@@ -83,7 +83,7 @@ export class AuthService {
       const isMatch = await bcrypt.compare(mpin, userData.mpin);
 
       if (isMatch) {
-        throw new NotFoundException(
+        throw new BadRequestException(
           'Your mpin is the same as your previous mpin. Please enter a different mpin!',
         );
       }
@@ -92,8 +92,8 @@ export class AuthService {
     const hashedMpin = await bcrypt.hash(mpin, 6);
     userData.mpin = hashedMpin;
     await this.userService.update(userData.id, userData);
-
-    return { message: 'Mpin set successfully', user: userData };
+    const tokens = await this.createTokens(userData.id, null);
+    return { message: 'Mpin set successfully', user: userData, tokens };
   }
 
   async verifyMpin(data: VerifyOrSetMpinInput) {

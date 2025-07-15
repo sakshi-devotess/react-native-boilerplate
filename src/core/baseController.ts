@@ -11,10 +11,6 @@ export class ErrorResult {
 }
 
 class BaseController {
-  private headers: Record<string, unknown> = {
-    'X-XSS=Protection': '1; mode=block',
-  };
-
   public getResult<T>(
     res: Response,
     code: HttpStatus,
@@ -27,9 +23,8 @@ class BaseController {
     if (message) {
       successObject.message = message;
     }
+    successObject.status = true;
     if (responseType === 'text') {
-      // res.set(this.headers);
-
       res.status(code).send(data);
       return res;
     } else {
@@ -44,7 +39,6 @@ class BaseController {
     key: string,
   ): Response {
     const result: ErrorResult = new ErrorResult(key);
-    // res.set(this.headers);
     return res.status(code).json(result);
   }
 }

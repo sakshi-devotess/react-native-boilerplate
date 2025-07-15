@@ -8,6 +8,7 @@ export interface ErrorStatusAndKey {
 export interface SuccessResponse<T> {
   message: string;
   data: T;
+  status: boolean;
 }
 
 export interface BaseFilterParam {

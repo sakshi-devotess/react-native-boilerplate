@@ -23,14 +23,15 @@ const nestedValidationErrorsCheck = (
       errorObject = errorObject.concat(nestedErrors);
     });
   } else {
+    const errors = Object.values(validationError.constraints || {});
     errorObject.push({
       index: parentIndex,
       fieldPath: fieldPath,
       target: validationError.target?.constructor?.name,
       error: {
-        [validationError.property]: Object.values(
-          validationError.constraints,
-        ).join(' '),
+        [validationError.property]: Object.values(validationError.constraints)[
+          errors.length - 1
+        ],
       },
     });
   }
