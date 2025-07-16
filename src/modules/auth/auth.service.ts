@@ -1,13 +1,9 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { RequestOtpInput } from './dto/request-otp.input';
 import { UserService } from '../user/user.service';
 import { OtpRequestsService } from '../otp-requests/otp-requests.service';
 import { VerifyOtpInput } from './dto/verify-otp.input';
-import { VerifyOrSetMpinInput } from './dto/set-mpin.input';
+import { SetMpinInput, VerifyMpinInput } from './dto/set-mpin.input';
 import * as bcrypt from 'bcrypt';
 import { TOKEN_TIME } from 'src/commons/constant';
 import { config } from 'src/commons/config';
@@ -62,7 +58,7 @@ export class AuthService {
     return { message: 'OTP verified successfully', user: userData };
   }
 
-  async setMpin(data: VerifyOrSetMpinInput) {
+  async setMpin(data: SetMpinInput) {
     const { mobile, mpin } = data;
     const userData = await this.getUserByMobile(mobile);
 
@@ -96,7 +92,7 @@ export class AuthService {
     return { message: 'Mpin set successfully', user: userData, tokens };
   }
 
-  async verifyMpin(data: VerifyOrSetMpinInput) {
+  async verifyMpin(data: VerifyMpinInput) {
     const { mobile, mpin } = data;
     const userData = await this.getUserByMobile(mobile);
 

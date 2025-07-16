@@ -5,7 +5,7 @@ import { AuthService } from './auth.service';
 import { RequestOtpInput } from './dto/request-otp.input';
 import { baseController } from 'src/core/baseController';
 import { VerifyOtpInput } from './dto/verify-otp.input';
-import { VerifyOrSetMpinInput } from './dto/set-mpin.input';
+import { SetMpinInput, VerifyMpinInput } from './dto/set-mpin.input';
 import { SkipAuth } from 'src/core/guards/auth-guard';
 
 @ApiTags('Auth')
@@ -42,17 +42,16 @@ export class AuthController {
   @SkipAuth()
   @Post('/set-mpin')
   async setMpin(
-    @Body() data: VerifyOrSetMpinInput,
+    @Body() data: SetMpinInput,
     @Res() res: Response,
   ): Promise<any> {
     const result = await this.authService.setMpin(data);
     return baseController.getResult(res, 200, result, 'Mpin set Successfully.');
   }
 
-  @SkipAuth()
   @Post('/verify-mpin')
   async verifyMpin(
-    @Body() data: VerifyOrSetMpinInput,
+    @Body() data: VerifyMpinInput,
     @Res() res: Response,
   ): Promise<any> {
     const result = await this.authService.verifyMpin(data);
