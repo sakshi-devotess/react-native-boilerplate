@@ -3,7 +3,6 @@ import {
   ExecutionContext,
   UnauthorizedException,
   SetMetadata,
-  BadRequestException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
@@ -41,7 +40,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
     const accessToken = request.headers.authorization;
     if (!accessToken) {
-      throw new BadRequestException('You do not have permission');
+      throw new UnauthorizedException('You do not have permission');
     }
     return super.canActivate(context);
   }

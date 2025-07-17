@@ -3,6 +3,8 @@ import { UserService } from './user.service';
 import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
 import { ApiBasicAuth, ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { CurrentUserDto } from 'src/core/guards/current-user.dto';
+import { CurrentUser } from 'src/commons/decorator/current-user.decorator';
 
 @ApiTags('user')
 @ApiBasicAuth()
@@ -40,6 +42,16 @@ export class UserController {
   @ApiBody({ type: UpdateUserInput })
   @Patch(':id')
   update(@Param('id') id: number, @Body() updateUserInput: UpdateUserInput) {
+    return this.userService.update(id, updateUserInput);
+  }
+
+  @ApiBody({ type: UpdateUserInput })
+  @Patch('my-profile')
+  updateMyProfile(
+    @Body() updateUserInput: UpdateUserInput,
+    @CurrentUser() currentUser: CurrentUserDto,
+  ) {
+    const id = currentUser.user_id;
     return this.userService.update(id, updateUserInput);
   }
 }

@@ -17,6 +17,7 @@ export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
 
   async validate(payload: any) {
     const { id } = payload;
+
     return { user_id: id };
   }
 }

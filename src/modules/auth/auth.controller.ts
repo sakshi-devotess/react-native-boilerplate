@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Post, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -7,6 +7,10 @@ import { baseController } from 'src/core/baseController';
 import { VerifyOtpInput } from './dto/verify-otp.input';
 import { SetMpinInput, VerifyMpinInput } from './dto/set-mpin.input';
 import { SkipAuth } from 'src/core/guards/auth-guard';
+import { RefreshTokenAuthGuard } from 'src/core/guards/refresh-token-guard';
+import { CurrentUserDto } from 'src/core/guards/current-user.dto';
+import { CurrentUser } from 'src/commons/decorator/current-user.decorator';
+import { RefreshToken } from './dto/refresh.input';
 
 @ApiTags('Auth')
 @ApiBearerAuth()
@@ -17,6 +21,16 @@ export class AuthController {
   @SkipAuth()
   @Post('/request-otp')
   async requestOtp(
+    @Body() data: RequestOtpInput,
+    @Res() res: Response,
+  ): Promise<any> {
+    const result = await this.authService.requestOtp(data);
+    return baseController.getResult(res, 200, result, 'OTP Send Successfully.');
+  }
+
+  @SkipAuth()
+  @Post('/resend-otp')
+  async resendOtp(
     @Body() data: RequestOtpInput,
     @Res() res: Response,
   ): Promise<any> {
@@ -55,6 +69,23 @@ export class AuthController {
     @Res() res: Response,
   ): Promise<any> {
     const result = await this.authService.verifyMpin(data);
+    return baseController.getResult(
+      res,
+      200,
+      result,
+      'Mpin Verified Successfully.',
+    );
+  }
+
+  @SkipAuth()
+  @Post('/refresh')
+  @UseGuards(RefreshTokenAuthGuard)
+  async refresh(
+    @Body() token: RefreshToken,
+    @CurrentUser() currentUser: CurrentUserDto,
+    @Res() res: Response,
+  ) {
+    const result = await this.authService.refresh(currentUser?.user_id);
     return baseController.getResult(
       res,
       200,

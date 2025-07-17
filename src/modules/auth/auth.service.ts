@@ -106,6 +106,14 @@ export class AuthService {
     return { message: 'Mpin verified successfully', user: userData, tokens };
   }
 
+  async refresh(user_id: number) {
+    const tokens = await this.createTokens(user_id, config.ACCESS_KEY);
+    return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+    };
+  }
+
   private async getUserByMobile(mobile: string) {
     const userData = await this.userService.findOne({ where: { mobile } });
     if (!userData) {
