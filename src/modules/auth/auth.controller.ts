@@ -11,6 +11,7 @@ import { RefreshTokenAuthGuard } from 'src/core/guards/refresh-token-guard';
 import { CurrentUserDto } from 'src/core/guards/current-user.dto';
 import { CurrentUser } from 'src/commons/decorator/current-user.decorator';
 import { RefreshToken } from './dto/refresh.input';
+import { ChangeMyMpinInput } from './dto/change-my-mpin.input';
 
 @ApiTags('Auth')
 @ApiBearerAuth()
@@ -63,6 +64,7 @@ export class AuthController {
     return baseController.getResult(res, 200, result, 'Mpin set Successfully.');
   }
 
+  @SkipAuth()
   @Post('/verify-mpin')
   async verifyMpin(
     @Body() data: VerifyMpinInput,
@@ -91,6 +93,24 @@ export class AuthController {
       200,
       result,
       'Mpin Verified Successfully.',
+    );
+  }
+
+  @Post('/change-my-mpin')
+  async changeMyMpin(
+    @Body() data: ChangeMyMpinInput,
+    @CurrentUser() currentUser: CurrentUserDto,
+    @Res() res: Response,
+  ) {
+    const result = await this.authService.changeMyMpin(
+      currentUser.user_id,
+      data,
+    );
+    return baseController.getResult(
+      res,
+      200,
+      result,
+      'Mpin Changed Successfully.',
     );
   }
 }

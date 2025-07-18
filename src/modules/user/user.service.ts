@@ -4,6 +4,9 @@ import { User } from './entities/user.entity';
 import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
 import { AbstractService } from 'src/commons/abstract.service';
+import { FileService } from '../file/file.service';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class UserService extends AbstractService {
@@ -13,7 +16,7 @@ export class UserService extends AbstractService {
    *
    * @param {ResponseMsgService} responseMsgService - Service to handle response messages.
    */
-  constructor() {
+  constructor(protected readonly fileService: FileService) {
     super(userRepository);
   }
 
@@ -38,12 +41,57 @@ export class UserService extends AbstractService {
     return create;
   }
 
-  async update(id: number, data: UpdateUserInput): Promise<User | boolean> {
+  async update(
+    id: number,
+    data: UpdateUserInput,
+    file: Express.Multer.File = null,
+  ) {
     const userData = await userRepository.findOne({ where: { id } });
     if (!userData) {
       throw new NotFoundException('User with this ID does not exist.');
     }
-    const updateResult = await this.abstractUpdate(id, data);
+    if (file) {
+      const uploadDir = path.resolve(
+        __dirname,
+        '../../../file/profile-pictures',
+      );
+      const userFilename = path.basename(file.path);
+      const userFilePath = path.join(uploadDir, userFilename);
+      const ext = path.extname(file.originalname);
+
+      const fileData = await this.fileService.create({
+        path: '',
+        original_name: file.originalname,
+      });
+
+      const fileId = fileData.id;
+      const finalFilename = `${fileId}${ext}`;
+      const finalFilePath = path.join(uploadDir, finalFilename);
+
+      const existing = fs
+        .readdirSync(uploadDir)
+        .filter((f) => f.startsWith(`${userData?.file_id}.`));
+      for (const f of existing) {
+        fs.unlinkSync(path.join(uploadDir, f));
+      }
+
+      fs.renameSync(userFilePath, finalFilePath);
+
+      await this.fileService.update(fileId, {
+        id: fileId,
+        path: finalFilePath,
+        original_name: finalFilename,
+      });
+
+      data.file_id = fileId;
+    }
+    delete data.profile_picture;
+    const updateData = {
+      ...data,
+      id: userData.id,
+    };
+    const updateResult = await this.abstractUpdate(id, updateData);
+
     return updateResult;
   }
 }

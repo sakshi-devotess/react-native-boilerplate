@@ -1,37 +1,69 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
+  NotFoundException,
   Param,
-  Delete,
+  Req,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Response, Request } from 'express';
 import { FileService } from './file.service';
-import { CreateFileInput } from './dto/create-file.input';
-import { UpdateFileInput } from './dto/update-file.input';
-import { ApiBasicAuth, ApiBody, ApiTags } from '@nestjs/swagger';
-
+import { SkipAuth } from 'src/core/guards/auth-guard';
+import * as fs from 'fs';
+import * as path from 'path';
 @ApiTags('file')
-@ApiBasicAuth()
+@ApiBearerAuth()
 @Controller('file')
+@SkipAuth()
 export class FileController {
-  /**
-   * Constructor to inject the FileService.
-   *
-   * @param FileService - Service to handle the business logic.
-   */
-  constructor(private readonly fileService: FileService) {}
+  constructor(private fileService: FileService) {}
 
-  /**
-   * Creates a new File entry.
-   *
-   * @param {CreateFileInput} createFileInput - The input data for creating the entity.
-   * @returns {Promise<any>} - The newly created entity.
-   */
-  @ApiBody({ type: CreateFileInput })
-  @Post()
-  create(@Body() createFileInput: CreateFileInput) {
-    return this.fileService.create(createFileInput);
+  @SkipAuth()
+  @Get('get-image/:id')
+  async getImage(
+    @Param('id') id: string,
+    @Res() res: Response,
+    @Req() request: Request,
+  ) {
+    const protocol = request.protocol;
+    const host = request.get('host');
+    const hostURL = `${protocol}://${host}`;
+    const url = await this.fileService.getFile(+id, hostURL);
+
+    if (!url) {
+      res.status(404).send('File not found');
+      return;
+    }
+    res.send(url);
+  }
+
+  @SkipAuth()
+  @Get(':id')
+  async getFileById(
+    @Param('id') id: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const file = await this.fileService.getFileById(+id);
+
+    if (!file) {
+      throw new NotFoundException('File not found');
+    }
+
+    const imagePath = path.join(
+      __dirname,
+      '../../../file/profile-pictures',
+      file.original_name,
+    );
+
+    if (!fs.existsSync(imagePath)) {
+      throw new NotFoundException('Image not found');
+    }
+    const fileBuffer = fs.readFileSync(imagePath);
+    const base64Data = fileBuffer.toString('base64');
+    const stream = this.fileService.base64ToStream(base64Data);
+
+    return new StreamableFile(stream);
   }
 }

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { RequestOtpInput } from './dto/request-otp.input';
 import { UserService } from '../user/user.service';
 import { OtpRequestsService } from '../otp-requests/otp-requests.service';
@@ -8,6 +12,7 @@ import * as bcrypt from 'bcrypt';
 import { TOKEN_TIME } from 'src/commons/constant';
 import { config } from 'src/commons/config';
 import { JwtService } from '@nestjs/jwt';
+import { ChangeMyMpinInput } from './dto/change-my-mpin.input';
 
 @Injectable()
 export class AuthService {
@@ -87,6 +92,7 @@ export class AuthService {
 
     const hashedMpin = await bcrypt.hash(mpin, 6);
     userData.mpin = hashedMpin;
+    userData.active = true;
     await this.userService.update(userData.id, userData);
     const tokens = await this.createTokens(userData.id, null);
     return { message: 'Mpin set successfully', user: userData, tokens };
@@ -100,7 +106,10 @@ export class AuthService {
     if (!isMatch) {
       throw new BadRequestException('Invalid Mpin');
     }
-
+    await this.userService.update(userData.id, {
+      id: userData.id,
+      active: true,
+    });
     const tokens = await this.createTokens(userData.id, null);
 
     return { message: 'Mpin verified successfully', user: userData, tokens };
@@ -151,5 +160,42 @@ export class AuthService {
       access_token: at,
       refresh_token: rt,
     };
+  }
+
+  async changeMyMpin(userId: number, data: ChangeMyMpinInput) {
+    // 1. Validate the old Mpin
+    const userData = await this.userService.findOne({
+      where: { id: userId, active: true },
+      select: { mpin: true },
+    });
+    if (!userData) {
+      throw new NotFoundException('User not found or inactive');
+    }
+    const isMatchMpin = await bcrypt.compare(data.currentMpin, userData.mpin);
+
+    if (!isMatchMpin) {
+      throw new BadRequestException('Old Mpin does not match');
+    }
+
+    const isSameAsOldMpin = await bcrypt.compare(data.newMpin, userData.mpin);
+    if (isSameAsOldMpin) {
+      throw new BadRequestException(
+        'New Mpin cannot be the same as the current Mpin',
+      );
+    }
+
+    // 2. Update user mpin in the database.
+    const user = await this.updateUserMpin(userId, data.newMpin);
+
+    // 3. Return the updated user.
+    return user;
+  }
+
+  async updateUserMpin(userId: number, mpin: string) {
+    mpin = await bcrypt.hash(mpin, 6);
+    return this.userService.update(userId, {
+      id: userId,
+      mpin,
+    });
   }
 }

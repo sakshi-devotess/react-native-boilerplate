@@ -1,10 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  UseInterceptors,
+  UploadedFile,
+  Res,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
 import { ApiBasicAuth, ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 import { CurrentUserDto } from 'src/core/guards/current-user.dto';
 import { CurrentUser } from 'src/commons/decorator/current-user.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { baseController } from 'src/core/baseController';
+import { Response } from 'express';
 
 @ApiTags('user')
 @ApiBasicAuth()
@@ -40,18 +55,32 @@ export class UserController {
   }
 
   @ApiBody({ type: UpdateUserInput })
-  @Patch(':id')
-  update(@Param('id') id: number, @Body() updateUserInput: UpdateUserInput) {
-    return this.userService.update(id, updateUserInput);
-  }
-
-  @ApiBody({ type: UpdateUserInput })
   @Patch('my-profile')
-  updateMyProfile(
+  @UseInterceptors(
+    FileInterceptor('profile_picture', {
+      storage: diskStorage({
+        destination: './file/profile-pictures',
+        filename: (req: any, file, callback) => {
+          const userId = req?.user?.user_id;
+          const ext = extname(file?.originalname);
+          callback(null, `user-${userId}${ext}`);
+        },
+      }),
+    }),
+  )
+  async updateMyProfile(
+    @UploadedFile() file: Express.Multer.File,
     @Body() updateUserInput: UpdateUserInput,
     @CurrentUser() currentUser: CurrentUserDto,
+    @Res() res: Response,
   ) {
     const id = currentUser.user_id;
-    return this.userService.update(id, updateUserInput);
+    const result = await this.userService.update(id, updateUserInput, file);
+    return baseController.getResult(
+      res,
+      200,
+      result,
+      'Profile updated successfully.',
+    );
   }
 }
