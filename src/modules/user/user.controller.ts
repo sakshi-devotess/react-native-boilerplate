@@ -55,7 +55,7 @@ export class UserController {
   }
 
   @ApiBody({ type: UpdateUserInput })
-  @Patch('my-profile')
+  @Post('my-profile')
   @UseInterceptors(
     FileInterceptor('profile_picture', {
       storage: diskStorage({
