@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { otpRequestsRepository } from './repository/otp-requests.repository';
 import { OtpRequests } from './entities/otp-requests.entity';
-import { RemoveDto } from '../../commons/dto/remove.dto';
 import { CreateOtpRequestsInput } from './dto/create-otp-requests.input';
 import { UpdateOtpRequestsInput } from './dto/update-otp-requests.input';
 import { AbstractService } from 'src/commons/abstract.service';

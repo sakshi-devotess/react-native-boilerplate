@@ -33,7 +33,6 @@ export class FileController {
     const url = await this.fileService.getFile(+id, hostURL);
 
     if (!url) {
-      res.status(404).send('File not found');
       return;
     }
     res.send(url);
@@ -46,7 +45,6 @@ export class FileController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const file = await this.fileService.getFileById(+id);
-
     if (!file) {
       throw new NotFoundException('File not found');
     }

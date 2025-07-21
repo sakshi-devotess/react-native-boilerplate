@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { CompanyType } from './entities/company-type.entity';
-import { RemoveDto } from '../../commons/dto/remove.dto';
 import { CreateCompanyTypeInput } from './dto/create-company-type.input';
 import { UpdateCompanyTypeInput } from './dto/update-company-type.input';
 import { companyTypeRepository } from './repository/company-type.repository';

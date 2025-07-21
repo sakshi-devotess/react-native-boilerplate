@@ -1,15 +1,6 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { OtpRequestsService } from './otp-requests.service';
 import { CreateOtpRequestsInput } from './dto/create-otp-requests.input';
-import { UpdateOtpRequestsInput } from './dto/update-otp-requests.input';
 import { ApiBasicAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('otp_requests ')

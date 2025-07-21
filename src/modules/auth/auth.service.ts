@@ -174,7 +174,7 @@ export class AuthService {
     const isMatchMpin = await bcrypt.compare(data.currentMpin, userData.mpin);
 
     if (!isMatchMpin) {
-      throw new BadRequestException('Old Mpin does not match');
+      throw new BadRequestException('Current Mpin does not match');
     }
 
     const isSameAsOldMpin = await bcrypt.compare(data.newMpin, userData.mpin);
