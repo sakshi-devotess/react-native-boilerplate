@@ -38,6 +38,18 @@ export abstract class AbstractService {
     const data = await this.repository.findOne(options);
     return data;
   }
+
+  /**
+   * Creates a new entity and validates it before saving to the repository.
+   *
+   * This method creates an instance of the entity from the provided data, runs
+   * validation using `class-validator`, and saves it if valid. If validation fails,
+   * a `BadRequestException` is thrown with details.
+   *
+   * @param {any} data - The data to create the entity from.
+   * @returns {Promise<any>} - Returns the newly created entity or `false` if save fails.
+   * @throws {BadRequestException} - If validation fails.
+   */
   async abstractCreate(data: any): Promise<any> {
     const entity = this.repository.create(data);
     const errors = await validate(entity);
@@ -56,15 +68,27 @@ export abstract class AbstractService {
 
     const res = await this.repository.save(entity);
     if (res && res.id) {
-      
       return await this.findOne({
         where: { id: res.id },
       });
     } else {
-      
       return false;
     }
   }
+
+  /**
+   * Updates an existing entity by ID and validates the updated data.
+   *
+   * This method attempts to preload the entity using the provided data and ID.
+   * It validates the entity before performing the update. If validation fails,
+   * a `BadRequestException` is thrown. If the update is successful, the updated
+   * entity is fetched and returned.
+   *
+   * @param {number} id - The ID of the entity to update.
+   * @param {any} data - The updated data to apply to the entity.
+   * @returns {Promise<any>} - The updated entity or `false` if update fails.
+   * @throws {BadRequestException} - If validation fails.
+   */
   async abstractUpdate(id: number, data: any): Promise<any> {
     const entity = await this.repository.preload(data);
     if (!entity) return false;

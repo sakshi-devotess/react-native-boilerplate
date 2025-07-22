@@ -1,6 +1,5 @@
 export class Option {
   label: string;
-
   value: number;
 }
 

@@ -48,6 +48,6 @@ export class CompanyTypeService {
     const updatedEntity = await companyTypeRepository.findOne({
       where: { id },
     });
-    return updatedEntity ? updatedEntity : false;
+    return updatedEntity || false;
   }
 }
