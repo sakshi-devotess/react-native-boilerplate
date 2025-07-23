@@ -19,7 +19,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { baseController } from 'src/core/baseController';
-import { Response } from 'express';
+import { Response, Express } from 'express';
 
 @ApiTags('user')
 @ApiBasicAuth()
